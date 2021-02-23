@@ -97,7 +97,7 @@ def test_remove_failed_realizations(
     measured_data_setup(input_dataframe, valid_obs_data, monkeypatch)
     md = MeasuredData(facade, ["obs_key"])
 
-    md.remove_failed_realizations()
+    md = md.remove_failed_realizations()
 
     expected_result.columns = _set_multiindex(expected_result)
     expected_result = pd.concat({"obs_key": expected_result}, axis=1)
@@ -140,7 +140,7 @@ def test_remove_inactive_observations(
     expected_result.columns = _set_multiindex(expected_result)
     expected_result = pd.concat({"obs_key": expected_result}, axis=1)
 
-    md.remove_inactive_observations()
+    md = md.remove_inactive_observations()
     assert md.data.equals(expected_result)
 
 
@@ -175,7 +175,7 @@ def test_filter_ensamble_std(
     measured_data_setup(input_dataframe, input_obs, monkeypatch)
     md = MeasuredData(facade, ["obs_key"])
 
-    md.filter_ensemble_std(std_cutoff)
+    md = md.filter_ensemble_std(std_cutoff)
     assert md.data.equals(pd.concat({"obs_key": expected_result}, axis=1))
 
 
@@ -213,8 +213,8 @@ def test_filter_ens_mean_obs(
     measured_data_setup(input_dataframe, input_obs, monkeypatch)
     md = MeasuredData(facade, ["obs_key"])
 
-    md.filter_ensemble_mean_obs(alpha)
-    assert md.data.equals(pd.concat({"obs_key": expected_result}, axis=1))
+    md = md.filter_ensemble_mean_obs(alpha)
+    assert md.equals(pd.concat({"obs_key": expected_result}, axis=1))
 
 
 @pytest.mark.usefixtures("facade", "measured_data_setup")

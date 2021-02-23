@@ -104,7 +104,7 @@ def test_gen_obs_runtime(monkeypatch, copy_snake_oil):
 
     df = MeasuredData(facade, [f"CUSTOM_DIFF_{restart}" for restart in range(1, 500)])
 
-    df.remove_inactive_observations()
+    df = df.remove_inactive_observations()
     assert df.data.shape == (27, 1995)
 
 
