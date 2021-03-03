@@ -3,3 +3,4 @@
    :hidden:
 
    plugin_system
+   ensemble_evaluator
