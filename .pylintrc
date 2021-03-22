@@ -78,7 +78,6 @@ disable=duplicate-code,
         invalid-name,
         unused-argument,
         no-self-use,
-        cyclic-import,
 
 
 # Enable the message, report, category or checker with the given id(s). You can

@@ -5,7 +5,8 @@ import io
 import yaml
 import requests
 
-import ert3
+from ert3.workspace import DATA_ROOT as ERT3_DATA_ROOT
+from ert3.data import EnsembleRecord
 
 
 _STORAGE_FILE = "storage.yaml"
@@ -22,7 +23,7 @@ _SPECIAL_KEYS = (_ENSEMBLE_RECORDS,)
 
 def _generate_storage_location(workspace: Union[str, Path]) -> Path:
     workspace = Path(workspace)
-    return workspace / ert3._WORKSPACE_DATA_ROOT / _STORAGE_FILE
+    return workspace / ERT3_DATA_ROOT / _STORAGE_FILE
 
 
 def _assert_storage_initialized(storage_location: Path) -> None:
@@ -142,7 +143,7 @@ def add_ensemble_record(
     *,
     workspace: Union[str, Path],
     record_name: str,
-    ensemble_record: ert3.data.EnsembleRecord,
+    ensemble_record: EnsembleRecord,
     experiment_name: Optional[str] = None,
 ) -> None:
     if experiment_name is None:
@@ -155,10 +156,10 @@ def get_ensemble_record(
     workspace: Union[str, Path],
     record_name: str,
     experiment_name: Optional[str] = None,
-) -> ert3.data.EnsembleRecord:
+) -> EnsembleRecord:
     if experiment_name is None:
         experiment_name = _ENSEMBLE_RECORDS
-    return ert3.data.EnsembleRecord.parse_raw(
+    return EnsembleRecord.parse_raw(
         _get_data(workspace, experiment_name, record_name)
     )
 

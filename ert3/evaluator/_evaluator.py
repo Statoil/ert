@@ -10,7 +10,8 @@ from ert_shared.ensemble_evaluator.prefect_ensemble.prefect_ensemble import (
     storage_driver_factory,
 )
 
-import ert3
+from ert3.data import Record, EnsembleRecord, MultiEnsembleRecord
+from ert3.workspace import DATA_ROOT as ERT3_DATA_ROOT
 
 _EVTYPE_SNAPSHOT_STOPPED = "Stopped"
 _EVTYPE_SNAPSHOT_FAILED = "Failed"
@@ -19,7 +20,7 @@ _EVTYPE_SNAPSHOT_FAILED = "Failed"
 def _create_evaluator_tmp_dir(workspace_root, evaluation_name):
     return (
         pathlib.Path(workspace_root)
-        / ert3._WORKSPACE_DATA_ROOT
+        / ERT3_DATA_ROOT
         / "tmp"
         / evaluation_name
     )
@@ -155,12 +156,12 @@ def _prepare_responses(raw_responses):
     for realization in raw_responses:
         assert responses.keys() == realization.keys()
         for key in realization:
-            responses[key].append(ert3.data.Record(data=realization[key]))
+            responses[key].append(Record(data=realization[key]))
 
     for key in responses:
-        responses[key] = ert3.data.EnsembleRecord(records=responses[key])
+        responses[key] = EnsembleRecord(records=responses[key])
 
-    return ert3.data.MultiEnsembleRecord(ensemble_records=responses)
+    return MultiEnsembleRecord(ensemble_records=responses)
 
 
 def evaluate(

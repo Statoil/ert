@@ -1,7 +1,5 @@
-from ert3.workspace._workspace import initialize
-from ert3.workspace._workspace import load
-from ert3.workspace._workspace import get_experiment_names
-from ert3.workspace._workspace import experiment_has_run
-from ert3.workspace._workspace import assert_experiment_exists
-
-EXPERIMENTS_BASE = "experiments"
+from ._workspace import load
+from ._workspace import get_experiment_names
+from ._workspace import assert_experiment_exists
+from ._workspace import EXPERIMENTS_BASE
+from ._workspace import DATA_ROOT

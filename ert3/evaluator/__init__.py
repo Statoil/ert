@@ -1,1 +1,1 @@
-from ert3.evaluator._evaluator import evaluate, cleanup
+from ._evaluator import evaluate, cleanup

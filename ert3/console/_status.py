@@ -1,9 +1,10 @@
-import ert3
+import ert3.workspace as ert3_workspace
+import ert3.storage as ert3_storage
 
 
 def status(workspace_root):
-    experiments = ert3.workspace.get_experiment_names(workspace_root)
-    done = ert3.storage.get_experiment_names(workspace=workspace_root)
+    experiments = ert3_workspace.get_experiment_names(workspace_root)
+    done = ert3_storage.get_experiment_names(workspace=workspace_root)
     pending = [experiment for experiment in experiments if experiment not in done]
 
     if done:

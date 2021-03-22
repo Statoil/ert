@@ -1,5 +1,6 @@
 import yaml
-import ert3
+
+from ert3.stats import Gaussian, Uniform
 
 
 # TODO: This entire file should be replaced by a pydantic schema!
@@ -15,13 +16,13 @@ def load_parameters(workspace):
     for parameter_group in parameter_config:
         dist_config = parameter_group["distribution"]
         if dist_config["type"] == "gaussian":
-            distribution = ert3.stats.Gaussian(
+            distribution = Gaussian(
                 dist_config["input"]["mean"],
                 dist_config["input"]["std"],
                 index=parameter_group["variables"],
             )
         elif dist_config["type"] == "uniform":
-            distribution = ert3.stats.Uniform(
+            distribution = Uniform(
                 dist_config["input"]["lower_bound"],
                 dist_config["input"]["upper_bound"],
                 index=parameter_group["variables"],

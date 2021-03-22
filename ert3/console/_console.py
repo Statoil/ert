@@ -3,7 +3,12 @@ from pathlib import Path
 import sys
 import yaml
 
-import ert3
+import ert3.config as ert3_config
+import ert3.engine as ert3_engine
+import ert3.exceptions as ert3_exceptions
+import ert3.workspace as ert3_workspace
+
+from ._status import status as ert3_experiment_status
 
 
 _ERT3_DESCRIPTION = (
@@ -80,11 +85,11 @@ def _build_argparser():
 
 def _run(workspace, args):
     assert args.sub_cmd == "run"
-    ert3.workspace.assert_experiment_exists(workspace, args.experiment_name)
+    ert3_workspace.assert_experiment_exists(workspace, args.experiment_name)
     ensemble = _load_ensemble_config(workspace, args.experiment_name)
     stages_config = _load_stages_config(workspace)
     experiment_config = _load_experiment_config(workspace, args.experiment_name)
-    ert3.engine.run(
+    ert3_engine.run(
         ensemble,
         stages_config,
         experiment_config,
@@ -95,17 +100,17 @@ def _run(workspace, args):
 
 def _export(workspace, args):
     assert args.sub_cmd == "export"
-    ert3.engine.export(workspace, args.experiment_name)
+    ert3_engine.export(workspace, args.experiment_name)
 
 
 def _record(workspace, args):
     assert args.sub_cmd == "record"
     if args.sub_record_cmd == "sample":
-        ert3.engine.sample_record(
+        ert3_engine.sample_record(
             workspace, args.parameter_group, args.record_name, args.ensemble_size
         )
     elif args.sub_record_cmd == "load":
-        ert3.engine.load_record(workspace, args.record_name, args.record_file)
+        ert3_engine.load_record(workspace, args.record_name, args.record_file)
         args.record_file.close()
     else:
         raise NotImplementedError(
@@ -115,7 +120,7 @@ def _record(workspace, args):
 
 def _status(workspace, args):
     assert args.sub_cmd == "status"
-    ert3.console.status(workspace)
+    ert3_experiment_status(workspace)
 
 
 def _clean(workspace, args):
@@ -126,7 +131,7 @@ def _clean(workspace, args):
 def main():
     try:
         _main()
-    except ert3.exceptions.ErtError as e:
+    except ert3_exceptions.ErtError as e:
         sys.exit(e)
 
 
@@ -139,14 +144,14 @@ def _main():
         parser.print_help()
         return
     if args.sub_cmd == "init":
-        ert3.workspace.initialize(Path.cwd())
+        ert3_workspace.initialize(Path.cwd())
         return
 
     # Commands that does requires an ert workspace
-    workspace = ert3.workspace.load(Path.cwd())
+    workspace = ert3_workspace.load(Path.cwd())
 
     if workspace is None:
-        raise ert3.exceptions.IllegalWorkspaceOperation("Not inside an ERT workspace.")
+        raise ert3_exceptions.IllegalWorkspaceOperation("Not inside an ERT workspace.")
 
     if args.sub_cmd == "run":
         _run(workspace, args)
@@ -164,22 +169,22 @@ def _main():
 
 def _load_ensemble_config(workspace, experiment_name):
     ensemble_config = (
-        workspace / ert3.workspace.EXPERIMENTS_BASE / experiment_name / "ensemble.yml"
+        workspace / ert3_workspace.EXPERIMENTS_BASE / experiment_name / "ensemble.yml"
     )
     with open(ensemble_config) as f:
-        return ert3.config.load_ensemble_config(yaml.safe_load(f))
+        return ert3_config.load_ensemble_config(yaml.safe_load(f))
 
 
 def _load_stages_config(workspace):
     with open(workspace / "stages.yml") as f:
         sys.path.append(str(workspace))
-        config = ert3.config.load_stages_config(yaml.safe_load(f))
+        config = ert3_config.load_stages_config(yaml.safe_load(f))
         return config
 
 
 def _load_experiment_config(workspace, experiment_name):
     experiment_config = (
-        workspace / ert3.workspace.EXPERIMENTS_BASE / experiment_name / "experiment.yml"
+        workspace / ert3_workspace.EXPERIMENTS_BASE / experiment_name / "experiment.yml"
     )
     with open(experiment_config) as f:
-        return ert3.config.load_experiment_config(yaml.safe_load(f))
+        return ert3_config.load_experiment_config(yaml.safe_load(f))
