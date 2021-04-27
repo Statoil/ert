@@ -5,7 +5,6 @@ List of Keywords
 
 For your convenience, the description of the keywords in the ERT configuration file
 are divided into the following groups:
-
 * Basic required keywords not related to parametrization. I.e. keywords giving
   the data, grid, schedule and observation file, defining how to run simulations
   and how to store results. These keywords are described in :ref:`Basic required
@@ -651,7 +650,7 @@ and/or history matching project.
         porosity, are implemented in terms of FIELD objects. When adding fields in the
         config file the syntax is a bit different for dynamic fields (typically
         solution data from ECLIPSE) and parameter fields like permeability and
-        porosity.
+        porosity or Gaussian Random Fields used by APS.
 
         **Dynamic fields**
 
@@ -681,18 +680,32 @@ and/or history matching project.
 
         **Parameter fields**
 
-        A parameter field (e.g. porosity or permeability) is defined as follows:
+        A parameter field (e.g. porosity or permeability or Gaussian Random Fields from APS) is defined as follows:
 
         ::
 
-                FIELD  ID PARAMETER   <ECLIPSE_FILE>  INIT_FILES:/path/%d  MIN:X MAX:Y OUTPUT_TRANSFORM:FUNC INIT_TRANSFORM:FUNC
+                FIELD  ID PARAMETER   <ECLIPSE_FILE>  INIT_FILES:/path/%d  MIN:X MAX:Y OUTPUT_TRANSFORM:FUNC INIT_TRANSFORM:FUNC  FORWARD_INIT:True
 
-        Here ID is again an arbitrary string, ECLIPSE_FILE is the name of the file ERT
-        will export this field to when running simulations. Note that there
-        should be an IMPORT statement in the ECLIPSE data file corresponding to the
-        name given with ECLIPSE_FILE. INIT_FILES is a filename (with an embedded %d)
+	Here ID must be the same as the name of the parameter in the INIT_FILES.
+        ECLIPSE_FILE is the name of the file ERT will export this field to when 
+        running simulations. Note that there should be an IMPORT statement in 
+        the ECLIPSE data file corresponding to the name given with ECLIPSE_FILE in case
+        the field parameter is a field used in ECLIPSE data file like perm or poro. 
+        INIT_FILES is a filename (with an embedded %d if FORWARD_INIT is set to False)
         to load the initial field from. Can be RMS ROFF format, ECLIPSE restart format
         or ECLIPSE GRDECL format.
+
+        FORWARD_INIT:True means that the files specified in the INIT_FILES are expected 
+        to be created by some FORWARD model, and does not need any embedded %d.
+	FORWARD_INIT:False means that the files must have been created before running
+        ERT and need and embedded %d.
+
+	When using FIELD to specify Gaussian Random Fields (GRF) from APS, it is here 
+	recommended to use ROFF binary files. 
+        NOTE: The APS GUI plugin for RMS  will write the GRF files to the directory  rms/output/aps 
+        so the INIT_FILES will refer to that directory. Note also that the name of the GRF parameters
+        are the same as the file names (except for the suffix (.roff  or .grdecl)). These names
+        must also be used as ID in the FIELD command.        
 
         The input arguments MIN, MAX, INIT_TRANSFORM and OUTPUT_TRANSFORM are all
         optional. MIN and MAX are as for dynamic fields.
@@ -738,6 +751,38 @@ and/or history matching project.
         extension .grdecl (arbitrary case), ERT will produce ordinary .grdecl files,
         which are loaded with an INCLUDE statement. This is probably what most users
         are used to beforehand - but we recomend the IMPORT form.
+
+        *Example C:*
+
+        ::
+                -- Use Gaussian Random Fields from APS for zone Volon.
+		-- RMS APSGUI plugin will create the files specified in INIT_FILES.
+		-- ERT will read the INIT_FILES in iteration 0 and write the updated GRF
+		-- fields to the files following the keyword PARAMETER.
+		-- Iteration 1 and larger will update the files following the keyword PARAMETER.
+		-- Fields created by APS are Gaussian Random Fields and no transformation is necessary.
+		-- The GRID command in ERT should usually use the file rms/output/aps/ERTBOX.EGRID 
+		-- when using APS with ERT where the ERTBOX grid is created by APS plugin in RMS
+		-- and exported from APS.
+		-- NOTE: The ERTBOX grid is a container for GRF values (or perm or poro values) and
+		-- is used to define the dimension of the fields. It is NOT the modelling grid 
+		-- used in RMS or the simulation grid used by ECLIPSE. 
+                FIELD  aps_Volon_GRF1  PARAMETER  aps_Volon_GRF1.roff  INIT_FILES:rms/output/aps/aps_Volon_GRF1.roff   MIN:-5.5  MAX:5.5  FORWARD_INIT:True
+                FIELD  aps_Volon_GRF2  PARAMETER  aps_Volon_GRF2.roff  INIT_FILES:rms/output/aps/aps_Volon_GRF2.roff   MIN:-5.5  MAX:5.5  FORWARD_INIT:True
+                FIELD  aps_Volon_GRF3  PARAMETER  aps_Volon_GRF3.roff  INIT_FILES:rms/output/aps/aps_Volon_GRF3.roff   MIN:-5.5  MAX:5.5  FORWARD_INIT:True
+
+        *Example D:*
+
+        ::
+                -- Use perm field for zone A
+		-- The GRID keyword should refer to the ERTBOX grid defining the size of the field.
+		-- Permeability must be sampled from the geomodel/simulation grid zone into the ERTBOX grid
+		-- and exported to /some/path/filename. Note that the name of the property in the input file
+		-- in INIT_FILES must be the same as the ID.
+                FIELD  perm_zone_A   PARAMETER  perm_zone_A.roff  INIT_FILES:/some/path/perm_zone_A.roff     INIT_TRANSFORM:LOG  OUTPUT_TRANSFORM:EXP   MIN:-5.5  MAX:5.5  FORWARD_INIT:True
+
+
+
 
         **General fields**
 
