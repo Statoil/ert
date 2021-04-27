@@ -14,7 +14,7 @@ class _Ensemble:
     def __repr__(self):
         return f"Ensemble with {len(self._reals)} members"
 
-    def evaluate(self, host, ee_id):
+    def evaluate(self, config, ee_id):
         pass
 
     def cancel(self):

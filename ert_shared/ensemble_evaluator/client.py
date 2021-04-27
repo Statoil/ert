@@ -10,6 +10,7 @@ class Client:
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
+
         if self.websocket is not None:
             self.loop.run_until_complete(self.websocket.close())
         self.loop.close()

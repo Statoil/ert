@@ -173,12 +173,7 @@ class EnsembleEvaluator:
     def store_client(self, websocket):
         self._clients.add(websocket)
         yield
-        try:
-            self._clients.remove(websocket)
-        except KeyError:
-            logger.debug(
-                f"Tried removing client {websocket.remote_address} twice. Likely the client was removed after sending a signal."
-            )
+        self._clients.remove(websocket)
 
     async def handle_client(self, websocket, path):
         with self.store_client(websocket):
@@ -204,14 +199,6 @@ class EnsembleEvaluator:
                 if client_event["type"] == identifiers.EVTYPE_EE_USER_DONE:
                     logger.debug(f"Client {websocket.remote_address} signalled done.")
                     self._stop()
-
-                # NOTE: due to how the monitor is implemented, a monitor that
-                # signals will open a connection for each signal and
-                # immediately exit after signalling. Consequently, it should be
-                # harmless to remove the client from the pool.
-                # If https://github.com/equinor/ert/issues/1538 is solved, then
-                # this necessarily needs to change.
-                self._clients.remove(websocket)
 
     @asynccontextmanager
     async def count_dispatcher(self):
@@ -292,16 +279,17 @@ class EnsembleEvaluator:
         logger.debug("Server thread exiting.")
 
     def terminate_message(self):
-        out_cloudevent = CloudEvent(
-            {
-                "type": identifiers.EVTYPE_EE_TERMINATED,
-                "source": f"/ert/ee/{self._ee_id}",
-                "id": str(self.event_index()),
-            }
-        )
-        message = to_json(
-            out_cloudevent, data_marshaller=serialization.evaluator_marshaller
-        ).decode()
+        attrs = {
+            "type": identifiers.EVTYPE_EE_TERMINATED,
+            "source": f"/ert/ee/{self._ee_id}",
+            "id": str(self.event_index()),
+        }
+        data = None
+        if self._result:
+            attrs["datacontenttype"] = "application/octet-stream"
+            data = cloudpickle.dumps(self._result)
+        out_cloudevent = CloudEvent(attrs, data)
+        message = to_json(out_cloudevent, data_marshaller=cloudpickle.dumps).decode()
         return message
 
     def event_index(self):
