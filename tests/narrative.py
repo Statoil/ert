@@ -369,7 +369,7 @@ class _ProviderVerifier:
                 self._interactions,
                 self._errors,
                 mock_direction=InteractionDirection.REQUEST,
-                verify_direction=InteractionDirection.RESPONSE
+                verify_direction=InteractionDirection.RESPONSE,
             )
 
     def _sync_listener(self, on_connect):
@@ -387,7 +387,9 @@ class _ProviderVerifier:
         return errors
 
 
-async def _mock_verify_handler(receive_func, send_func, interactions, errors, mock_direction, verify_direction):
+async def _mock_verify_handler(
+    receive_func, send_func, interactions, errors, mock_direction, verify_direction
+):
 
     try:
         for interaction in interactions:
@@ -408,11 +410,9 @@ async def _mock_verify_handler(receive_func, send_func, interactions, errors, mo
     except AssertionError as e:
         errors.put_nowait(e)
     except Exception as e:
-        import traceback
-
-        traceback.print_exc()
-        print(e)
+        errors.put_nowait(e)
         raise
+
 
 class _ProviderMock:
     def __init__(
@@ -453,7 +453,7 @@ class _ProviderMock:
             self._interactions,
             self._errors,
             mock_direction=InteractionDirection.RESPONSE,
-            verify_direction=InteractionDirection.REQUEST
+            verify_direction=InteractionDirection.REQUEST,
         )
 
     def _sync_ws(self, delay_startup=0):
