@@ -173,10 +173,32 @@ These keywords must be set to make ERT function properly.
         This is the name of an existing GRID/EGRID file for your ECLIPSE model. If you
         had to create a new grid file when preparing your ECLIPSE reservoir model for
         use with ERT, this should point to the new .EGRID file. The main use of the
-        grid is to map out active and inactive cells when using FIELD data. If you do
+        grid is to map out active and inactive cells when using FIELD data and define
+	the dimension of the property parameter files in the FIELD keyword. If you do
         not use FIELD data you do not need the GRID keyword. The grid argument will
         only be used by the main ERT application and not passed down to the forward
         model in any way.
+
+	A new way of handling property values for the FIELD keyword is to use a
+        help grid called ERTBOX grid. The GRID keyword should in this case specify
+        the ERTBOX filename (which is in EGRID format). The ERTBOX grid 
+        is a grid with the same spatial location and rotation (x,y location) as the 
+	modelling grid, but it is a regular grid in a rectangular box. 
+	The number of layers must at least be as large as the number of layers 
+         in the zone in the modelling grid with most layers. The properties used in
+	 the FIELD keyword have the dimension of the ERTBOX grid. Each grid cell
+	 in the modelling grid corresponds to one unique grid cell in the ERTBOX 
+	 grid. Inactive grid cells in the modelling grid also corresponds to grid cells
+	 in the ERTBOX grid. There may exists layers of grid cells in the ERTBOX grid
+	 that does not corresponds to grid cells in the modelling grid. 
+	 It is recommended to let all grid cells in the ERTBOX grid be active and have
+	 realistic values and not a 'missing code'.  For cases where the modelling grid 
+	 is kept fixed for all realisations, this is not  important, but for cases where 
+	 the number of layers for the zones in the modelling grid may vary from 
+	 realisation to realisation, this approach is more robust. It avoids mixing real 
+	 physical values from one realisation with missing code value from another 
+	 realization when calculating updated ensemble vectors.
+	 
 
         *Example:*
 
@@ -696,16 +718,9 @@ and/or history matching project.
         or ECLIPSE GRDECL format.
 
         FORWARD_INIT:True means that the files specified in the INIT_FILES are expected 
-        to be created by some FORWARD model, and does not need any embedded %d.
+        to be created by a forward model, and does not need any embedded %d.
 	FORWARD_INIT:False means that the files must have been created before running
-        ERT and need and embedded %d.
-
-	When using FIELD to specify Gaussian Random Fields (GRF) from APS, it is here 
-	recommended to use ROFF binary files. 
-        NOTE: The APS GUI plugin for RMS  will write the GRF files to the directory  rms/output/aps 
-        so the INIT_FILES will refer to that directory. Note also that the name of the GRF parameters
-        are the same as the file names (except for the suffix (.roff  or .grdecl)). These names
-        must also be used as ID in the FIELD command.        
+        ERT and need an embedded %d.
 
         The input arguments MIN, MAX, INIT_TRANSFORM and OUTPUT_TRANSFORM are all
         optional. MIN and MAX are as for dynamic fields.
@@ -750,20 +765,17 @@ and/or history matching project.
         is faster than for plain text files. If you give the ECLIPSE_FILE with the
         extension .grdecl (arbitrary case), ERT will produce ordinary .grdecl files,
         which are loaded with an INCLUDE statement. This is probably what most users
-        are used to beforehand - but we recomend the IMPORT form.
+        are used to beforehand - but we recommend the IMPORT form. When using RMS APS 
+        plugin to create Gaussian Random Fields, the recommended file format is ROFF binary.
 
         *Example C:*
 
         ::
+
                 -- Use Gaussian Random Fields from APS for zone Volon.
 		-- RMS APSGUI plugin will create the files specified in INIT_FILES.
 		-- ERT will read the INIT_FILES in iteration 0 and write the updated GRF
-		-- fields to the files following the keyword PARAMETER.
-		-- Iteration 1 and larger will update the files following the keyword PARAMETER.
-		-- Fields created by APS are Gaussian Random Fields and no transformation is necessary.
-		-- The GRID command in ERT should usually use the file rms/output/aps/ERTBOX.EGRID 
-		-- when using APS with ERT where the ERTBOX grid is created by APS plugin in RMS
-		-- and exported from APS.
+		-- fields to the files following the keyword PARAMETER after updating.
 		-- NOTE: The ERTBOX grid is a container for GRF values (or perm or poro values) and
 		-- is used to define the dimension of the fields. It is NOT the modelling grid 
 		-- used in RMS or the simulation grid used by ECLIPSE. 
@@ -774,6 +786,7 @@ and/or history matching project.
         *Example D:*
 
         ::
+
                 -- Use perm field for zone A
 		-- The GRID keyword should refer to the ERTBOX grid defining the size of the field.
 		-- Permeability must be sampled from the geomodel/simulation grid zone into the ERTBOX grid
