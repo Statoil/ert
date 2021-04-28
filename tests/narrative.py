@@ -363,31 +363,14 @@ class _ProviderVerifier:
     async def _mock_listener(self, on_connect):
         async with websockets.connect(self._uri) as websocket:
             on_connect()
-            for interaction in self._interactions:
-                if type(interaction) == _Interaction:
-                    e = TypeError(
-                        "the first interaction needs to be promoted to either response or receive"
-                    )
-                    self._errors.put_nowait(e)
-                elif InteractionDirection.REQUEST.represents(interaction):
-                    for msg in interaction.generate():
-                        await websocket.send(msg)
-                    print("OK", interaction.scenario)
-                elif InteractionDirection.RESPONSE.represents(interaction):
-
-                    async def receive():
-                        return InteractionDirection.RESPONSE, await websocket.recv()
-
-                    try:
-                        await interaction.verify(receive)
-                    except AssertionError as e:
-                        self._errors.put_nowait(e)
-                    print("OK", interaction.scenario)
-                else:
-                    e = TypeError(
-                        f"expected either receive or response, got {interaction}"
-                    )
-                    self._errors.put_nowait(e)
+            await _mock_verify_handler(
+                websocket.recv,
+                websocket.send,
+                self._interactions,
+                self._errors,
+                mock_direction=InteractionDirection.REQUEST,
+                verify_direction=InteractionDirection.RESPONSE
+            )
 
     def _sync_listener(self, on_connect):
         self._loop = asyncio.new_event_loop()
@@ -403,6 +386,33 @@ class _ProviderVerifier:
                 break
         return errors
 
+
+async def _mock_verify_handler(receive_func, send_func, interactions, errors, mock_direction, verify_direction):
+
+    try:
+        for interaction in interactions:
+            if mock_direction.represents(interaction):
+                for msg in interaction.generate():
+                    await send_func(msg)
+            elif verify_direction.represents(interaction):
+
+                async def receive():
+                    return verify_direction, await receive_func()
+
+                await interaction.verify(receive)
+            else:
+                e = TypeError(
+                    "the first interaction needs to be promoted to either response or receive"
+                )
+                errors.put_nowait(e)
+    except AssertionError as e:
+        errors.put_nowait(e)
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        print(e)
+        raise
 
 class _ProviderMock:
     def __init__(
@@ -437,30 +447,14 @@ class _ProviderMock:
         if path != expected_path:
             print(f"not handling {path} as it is not the expected path {expected_path}")
             return
-        try:
-            for interaction in self._interactions:
-                if InteractionDirection.RESPONSE.represents(interaction):
-                    for msg in interaction.generate():
-                        await websocket.send(msg)
-                elif InteractionDirection.REQUEST.represents(interaction):
-
-                    async def receive():
-                        return InteractionDirection.REQUEST, await websocket.recv()
-
-                    await interaction.verify(receive)
-                else:
-                    e = TypeError(
-                        "the first interaction needs to be promoted to either response or receive"
-                    )
-                    self._errors.put_nowait(e)
-        except AssertionError as e:
-            self._errors.put_nowait(e)
-        except Exception as e:
-            import traceback
-
-            traceback.print_exc()
-            print(e)
-            raise
+        await _mock_verify_handler(
+            websocket.recv,
+            websocket.send,
+            self._interactions,
+            self._errors,
+            mock_direction=InteractionDirection.RESPONSE,
+            verify_direction=InteractionDirection.REQUEST
+        )
 
     def _sync_ws(self, delay_startup=0):
         self._loop = asyncio.new_event_loop()
