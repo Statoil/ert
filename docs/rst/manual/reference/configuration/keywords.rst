@@ -183,21 +183,26 @@ These keywords must be set to make ERT function properly.
         help grid called ERTBOX grid. The GRID keyword should in this case specify
         the ERTBOX filename (which is in EGRID format). The ERTBOX grid 
         is a grid with the same spatial location and rotation (x,y location) as the 
-	modelling grid, but it is a regular grid in a rectangular box. 
+	modelling grid, but it is a regular grid in a rectangular box. The dimensions 
+	of the ERTBOX grid laterally is the same as the modelling grid, but the number 
+	of layers is only large enough to store the properties for one zone, not the 
+	whole modelling grid.
+	
 	The number of layers must at least be as large as the number of layers 
-         in the zone in the modelling grid with most layers. The properties used in
-	 the FIELD keyword have the dimension of the ERTBOX grid. Each grid cell
-	 in the modelling grid corresponds to one unique grid cell in the ERTBOX 
-	 grid. Inactive grid cells in the modelling grid also corresponds to grid cells
-	 in the ERTBOX grid. There may exists layers of grid cells in the ERTBOX grid
-	 that does not corresponds to grid cells in the modelling grid. 
-	 It is recommended to let all grid cells in the ERTBOX grid be active and have
-	 realistic values and not a 'missing code'.  For cases where the modelling grid 
-	 is kept fixed for all realisations, this is not  important, but for cases where 
-	 the number of layers for the zones in the modelling grid may vary from 
-	 realisation to realisation, this approach is more robust. It avoids mixing real 
-	 physical values from one realisation with missing code value from another 
-	 realization when calculating updated ensemble vectors.
+        in the zone in the modelling grid with most layers. The properties used in
+	the FIELD keyword have the dimension of the ERTBOX grid and represents 
+	properties of one zone from the modelling grid. Each grid cell in the modelling 
+	grid for a given zone corresponds to one unique grid cell 
+	in the ERTBOX grid. Inactive grid cells in the modelling grid also corresponds 
+	to grid cells in the ERTBOX grid. There may exists layers of grid cells in the 
+	ERTBOX grid that does not corresponds to grid cells in the modelling grid. 
+	It is recommended to let all grid cells in the ERTBOX grid be active and have
+	realistic values and not a 'missing code'. For cases where the modelling grid 
+	is kept fixed for all realisations, this is not important, but for cases where 
+	the number of layers for the zones in the modelling grid may vary from 
+	realisation to realisation, this approach is more robust. It avoids mixing real 
+	physical values from one realisation with missing code value from another 
+	realization when calculating updated ensemble vectors.
 	 
 
         *Example:*
