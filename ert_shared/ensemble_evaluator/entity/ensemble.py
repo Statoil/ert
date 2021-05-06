@@ -10,7 +10,7 @@ from ert_shared.ensemble_evaluator.entity.ensemble_base import _Ensemble
 from ert_shared.ensemble_evaluator.entity.ensemble_legacy import _LegacyEnsemble
 from ert_shared.ensemble_evaluator.entity.function_step import FunctionTask
 from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
-from res.enkf import EnKFState
+from res.enkf import EnKFState, RunArg
 
 logger = logging.getLogger(__name__)
 
@@ -774,7 +774,9 @@ class _EnsembleBuilder:
                         .set_ext_job(ext_job)
                     )
                 run_arg = run_context[iens]
-                step.set_max_runtime(max_runtime).set_callback_arguments(
+                step.set_max_runtime(
+                    max_runtime
+                ).set_callback_arguments(
                     [run_arg, res_config]
                 ).set_done_callback(
                     EnKFState.forward_model_ok_callback

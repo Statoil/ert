@@ -226,6 +226,8 @@ class EnsembleEvaluator:
                     event = from_json(
                         msg, data_unmarshaller=serialization.evaluator_unmarshaller
                     )
+                    if event["type"] == identifiers.EVTYPE_FM_STEP_TIMEOUT:
+                        print("timeout!")
                 except cloudevents.exceptions.DataUnmarshallerError:
                     event = from_json(msg, data_unmarshaller=lambda x: pickle.loads(x))
                 await self._dispatch.handle_event(self, event)

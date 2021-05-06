@@ -17,7 +17,7 @@ from ert_shared.status.entity.state import (
     REAL_STATE_TO_COLOR,
 )
 from ert_shared.status.utils import format_running_time
-
+from ert_shared.status.entity import state
 
 def _ansi_color(*args, **kwargs):
     # This wraps ansi_color such that when _ansi_color is bound to Monitor,
@@ -70,7 +70,18 @@ class Monitor:
                 self._print_progress(event)
             if isinstance(event, EndEvent):
                 self._print_result(event.failed, event.failed_msg)
+                self._print_job_errors()
                 return
+
+    def _print_job_errors(self):
+        for snapshot_id, snapshot in self._snapshots.items():
+            for real_id, real in snapshot.get_reals().items():
+                for step_id, step in real.steps.items():
+                    for job_id, job in step.jobs.items():
+                        if job.status == state.JOB_STATE_FAILURE:
+                            print(f"Job failure in iteration: {snapshot_id} real: {real_id} "
+                                  f"step: {step_id} job: {job_id} name: {job.name}\nError: {job.error}")
+
 
     def _get_legends(self) -> str:
         statuses = ""

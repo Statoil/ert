@@ -29,6 +29,7 @@ _FM_TYPE_EVENT_TO_STATUS = {
     ids.EVTYPE_FM_STEP_FAILURE: state.STEP_STATE_FAILURE,
     ids.EVTYPE_FM_STEP_SUCCESS: state.STEP_STATE_SUCCESS,
     ids.EVTYPE_FM_STEP_UNKNOWN: state.STEP_STATE_UNKNOWN,
+    ids.EVTYPE_FM_STEP_TIMEOUT: state.STEP_STATE_FAILURE,
     ids.EVTYPE_FM_JOB_START: state.JOB_STATE_START,
     ids.EVTYPE_FM_JOB_RUNNING: state.JOB_STATE_RUNNING,
     ids.EVTYPE_FM_JOB_SUCCESS: state.JOB_STATE_FINISHED,
@@ -143,9 +144,10 @@ class PartialSnapshot:
         if e_type in ids.EVGROUP_FM_STEP:
             start_time = None
             end_time = None
+
             if e_type == ids.EVTYPE_FM_STEP_RUNNING:
                 start_time = convert_iso8601_to_datetime(timestamp)
-            elif e_type in {ids.EVTYPE_FM_STEP_SUCCESS, ids.EVTYPE_FM_STEP_FAILURE}:
+            elif e_type in {ids.EVTYPE_FM_STEP_SUCCESS, ids.EVTYPE_FM_STEP_FAILURE, ids.EVTYPE_FM_STEP_TIMEOUT}:
                 end_time = convert_iso8601_to_datetime(timestamp)
 
             self.update_step(
@@ -157,6 +159,21 @@ class PartialSnapshot:
                     end_time=end_time,
                 ),
             )
+
+            if e_type == ids.EVTYPE_FM_STEP_TIMEOUT:
+                step = self._snapshot.get_step(get_real_id(e_source), get_step_id(e_source))
+                for job_id, job in step.jobs.items():
+                    if job.status != state.JOB_STATE_FINISHED:
+                        job_error = "The run is cancelled due to reaching MAX_RUNTIME"
+                        self.update_job(
+                            get_real_id(e_source),
+                            get_step_id(e_source),
+                            job_id,
+                            job=Job(
+                                status=state.JOB_STATE_FAILURE,
+                                error=job_error
+                            ),
+                        )
 
         elif e_type in ids.EVGROUP_FM_JOB:
             start_time = None

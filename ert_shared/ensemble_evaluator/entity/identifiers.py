@@ -65,6 +65,7 @@ EVTYPE_FM_STEP_RUNNING = "com.equinor.ert.forward_model_step.running"
 EVTYPE_FM_STEP_SUCCESS = "com.equinor.ert.forward_model_step.success"
 EVTYPE_FM_STEP_UNKNOWN = "com.equinor.ert.forward_model_step.unknown"
 EVTYPE_FM_STEP_WAITING = "com.equinor.ert.forward_model_step.waiting"
+EVTYPE_FM_STEP_TIMEOUT = "com.equinor.ert.forward_model_step.timeout"
 
 EVTYPE_FM_JOB_START = "com.equinor.ert.forward_model_job.start"
 EVTYPE_FM_JOB_RUNNING = "com.equinor.ert.forward_model_job.running"
@@ -79,6 +80,7 @@ EVGROUP_FM_STEP = {
     EVTYPE_FM_STEP_SUCCESS,
     EVTYPE_FM_STEP_UNKNOWN,
     EVTYPE_FM_STEP_WAITING,
+    EVTYPE_FM_STEP_TIMEOUT,
 }
 
 EVGROUP_FM_JOB = {
