@@ -1,4 +1,4 @@
-from typing import List, Mapping, Any, Dict
+from typing import List, Mapping, Any, Dict, Union
 
 from ert_data.measured import MeasuredData
 from res.enkf.enums.enkf_obs_impl_type_enum import EnkfObservationImplementationType
@@ -91,7 +91,7 @@ def create_response_records(ert, ensemble_name: str, observations: List[dict]):
         for index, values in response.iteritems():
             df = pd.DataFrame(values.to_list())
             df = df.transpose()
-            df.columns = response.index.tolist()
+            df.columns = _prepare_x_axis(response.index.tolist())
             realizations[index] = df
         observation_key = response_observation_links.get(key)
         linked_observation = (
@@ -101,6 +101,13 @@ def create_response_records(ert, ensemble_name: str, observations: List[dict]):
             dict(name=key, data=realizations, observations=linked_observation)
         )
     return records
+
+
+def _prepare_x_axis(x_axis: List[Union[int, float, str, pd.Timestamp]]) -> List[str]:
+    if isinstance(x_axis[0], pd.Timestamp):
+        return [pd.Timestamp(x).isoformat() for x in x_axis]
+
+    return [str(x) for x in x_axis]
 
 
 def _get_obs_data(key, obs) -> dict:
@@ -147,7 +154,7 @@ def create_observations(ert) -> List[Mapping[str, dict]]:
             list(t)
             for t in zip(*sorted(zip(obs["x_axis"], obs["values"], obs["errors"])))
         )
-        x_axis = [str(x) for x in x_axis]
+        x_axis = _prepare_x_axis(x_axis)
         grouped_obs[key]["x_axis"] = x_axis
         grouped_obs[key]["values"] = values
         grouped_obs[key]["errors"] = error
@@ -215,7 +222,7 @@ def _create_observation_transformation(ert, db_observations) -> List[dict]:
             list(t)
             for t in zip(*sorted(zip(obs["x_axis"], obs["active"], obs["scale"])))
         )
-        x_axis = [str(x) for x in x_axis]
+        x_axis = _prepare_x_axis(x_axis)
         transformations[key]["x_axis"] = x_axis
         transformations[key]["active"] = active
         transformations[key]["scale"] = scale
