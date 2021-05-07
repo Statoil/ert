@@ -14,7 +14,7 @@ import websockets
 from async_generator import asynccontextmanager
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
-from ert_shared.ensemble_evaluator.dispatch import Dispatcher
+from ert_shared.ensemble_evaluator.dispatch import Dispatcher, Batcher
 from ert_shared.ensemble_evaluator.entity import serialization
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
@@ -60,6 +60,8 @@ class EnsembleEvaluator:
 
         self._clients = set()
         self._dispatchers_connected = asyncio.Queue(loop=self._loop)
+        self._batcher = Batcher(timeout=0.5, loop=self._loop)
+        self._dispatch.set_batcher(batcher=self._batcher)
 
         self._snapshot = self.create_snapshot(ensemble)
         self._event_index = 1
@@ -93,9 +95,11 @@ class EnsembleEvaluator:
 
         return Snapshot(top.dict())
 
-    @_dispatch.register_event_handler(identifiers.EVGROUP_FM_ALL)
-    async def _fm_handler(self, event):
-        snapshot_mutate_event = PartialSnapshot(self._snapshot).from_cloudevent(event)
+    @_dispatch.register_event_handler(identifiers.EVGROUP_FM_ALL, batching=True)
+    async def _fm_handler(self, events):
+        snapshot_mutate_event = PartialSnapshot(self._snapshot)
+        for event in events:
+            snapshot_mutate_event.from_cloudevent(event)
         await self._send_snapshot_update(snapshot_mutate_event)
 
     @_dispatch.register_event_handler(identifiers.EVTYPE_ENSEMBLE_STOPPED)
@@ -283,10 +287,8 @@ class EnsembleEvaluator:
             await done
             logger.debug("Got done signal.")
             # give NFS adaptors and Queue adaptors some time to read/send last events
-            try:
-                await asyncio.wait_for(self._dispatchers_connected.join(), timeout=10)
-            except asyncio.TimeoutError:
-                pass
+            await self._dispatchers_connected.join()
+            await self._batcher.join()
             message = self.terminate_message()
             if self._clients:
                 await asyncio.wait([client.send(message) for client in self._clients])
