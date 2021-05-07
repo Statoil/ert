@@ -228,6 +228,11 @@ class EnsembleEvaluator:
                     )
                 except cloudevents.exceptions.DataUnmarshallerError:
                     event = from_json(msg, data_unmarshaller=lambda x: pickle.loads(x))
+                if self._get_ee_id(event["source"]) != self._ee_id:
+                    logger.info(
+                        f"Got event from evaluator {self._get_ee_id(event['source'])} with source {event['source']}, ignoring since I am {self._ee_id}"
+                    )
+                    continue
                 await self._dispatch.handle_event(self, event)
                 if event["type"] in [
                     identifiers.EVTYPE_ENSEMBLE_STOPPED,
@@ -343,3 +348,8 @@ class EnsembleEvaluator:
             for _ in mon.track():
                 pass
         return self.get_successful_realizations()
+
+    @staticmethod
+    def _get_ee_id(source) -> str:
+        # the ee_id will be found at /ert/ee/ee_id/...
+        return source.split("/")[3]
